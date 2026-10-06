@@ -3,7 +3,7 @@
 import {motion} from "framer-motion"
 import {useInView} from "framer-motion"
 import {useRef, useState} from "react"
-import { MapPin, Phone, Mail, Clock, Send } from "lucide-react"
+import { MapPin, Phone, Mail, Clock } from "lucide-react"
 import { WhatsAppIcon } from "./whatsapp-icon"
 import {useToast} from "@/hooks/use-toast"
 
@@ -20,54 +20,40 @@ export function ContactSection() {
         message: "",
     })
 
-    const [isLoading, setIsLoading] = useState(false)
-
     // Dynamic Contact Info from Env Variables with Sensible Fallbacks
     const address = process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "Dubai International City, England Cluster, Building-Y18 "
     const phone = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+971 52 999 6746"
     const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "Nooralwarsan999@gmail.com"
     const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+971529996746"
+    const cleanPhone = whatsappNumber.replace(/[^0-9]/g, "")
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        setIsLoading(true)
 
-        try {
-            const response = await fetch("/api/quote", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(formData),
-            })
+        const messageParts = [
+            `*New Quote / Supply Inquiry - Noor Al Warsan LLC*`,
+            `*Name:* ${formData.name}`,
+            formData.company ? `*Company:* ${formData.company}` : null,
+            formData.phone ? `*Phone:* ${formData.phone}` : null,
+            formData.email ? `*Email:* ${formData.email}` : null,
+            `\n*Requirements / Message:*\n${formData.message}`,
+        ].filter(Boolean).join("\n")
 
-            const data = await response.json()
+        const text = encodeURIComponent(messageParts)
+        window.open(`https://wa.me/${cleanPhone}?text=${text}`, "_blank")
 
-            if (!response.ok) {
-                throw new Error(data.error || "Failed to submit quote request.")
-            }
+        toast({
+            title: "Opening WhatsApp",
+            description: "Connecting you directly with our sales team on WhatsApp...",
+        })
 
-            toast({
-                title: "Quote Request Sent!",
-                description: "Thank you. We will get back to you shortly.",
-            })
-
-            setFormData({
-                name: "",
-                email: "",
-                company: "",
-                phone: "",
-                message: "",
-            })
-        } catch (error: any) {
-            toast({
-                title: "Error Sending Request",
-                description: error.message || "An unexpected error occurred. Please try again.",
-                variant: "destructive",
-            })
-        } finally {
-            setIsLoading(false)
-        }
+        setFormData({
+            name: "",
+            email: "",
+            company: "",
+            phone: "",
+            message: "",
+        })
     }
 
     const contactInfo = [
@@ -75,21 +61,25 @@ export function ContactSection() {
             icon: MapPin,
             title: "Address",
             content: address,
+            href: "https://maps.google.com/?q=Dubai+International+City+England+Cluster+Building+Y18",
         },
         {
             icon: Phone,
             title: "Phone",
             content: phone,
+            href: `tel:${phone.replace(/\s+/g, "")}`,
         },
         {
             icon: Mail,
             title: "Email",
             content: email,
+            href: `mailto:${email}`,
         },
         {
             icon: Clock,
             title: "Business Hours",
             content: "Sunday - Thursday: 8AM - 6PM",
+            href: null,
         },
     ]
 
@@ -206,14 +196,23 @@ export function ContactSection() {
                                 />
                             </div>
 
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-8 py-4 font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-xl sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isLoading ? "Sending..." : "Send Message"}
-                                <Send className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
-                            </button>
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                                <button
+                                    type="submit"
+                                    className="group inline-flex items-center justify-center gap-2.5 rounded-xl bg-[#25D366] px-8 py-4 font-semibold text-white transition-all hover:bg-[#20ba5a] hover:shadow-xl shadow-lg shadow-[#25D366]/25"
+                                >
+                                    <WhatsAppIcon className="h-5 w-5" />
+                                    <span>Send Quote Request on WhatsApp</span>
+                                </button>
+                                <a
+                                    href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent("Hello Noor Al Warsan LLC, I would like to inquire about your fresh food and vegetable supply services.")}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-background/20 bg-background/5 px-6 py-4 text-sm font-medium text-background hover:bg-background/15 transition-all text-center"
+                                >
+                                    Direct Chat Without Form
+                                </a>
+                            </div>
                         </form>
                     </motion.div>
 
@@ -225,32 +224,57 @@ export function ContactSection() {
                         className="space-y-8"
                     >
                         <div className="grid gap-6 sm:grid-cols-2">
-                            {contactInfo.map((info) => (
-                                <div
-                                    key={info.title}
-                                    className="rounded-2xl border border-background/10 bg-background/5 p-6"
-                                >
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/20">
-                                        <info.icon className="h-5 w-5 text-accent"/>
+                            {contactInfo.map((info) => {
+                                const Content = (
+                                    <>
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/20">
+                                            <info.icon className="h-5 w-5 text-accent"/>
+                                        </div>
+                                        <h3 className="mt-4 font-semibold text-background">{info.title}</h3>
+                                        <p className="mt-1 text-background/70">{info.content}</p>
+                                    </>
+                                )
+
+                                return info.href ? (
+                                    <a
+                                        key={info.title}
+                                        href={info.href}
+                                        target={info.href.startsWith("http") ? "_blank" : undefined}
+                                        rel={info.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                                        className="rounded-2xl border border-background/10 bg-background/5 p-6 transition-all hover:border-accent hover:bg-background/10"
+                                    >
+                                        {Content}
+                                    </a>
+                                ) : (
+                                    <div
+                                        key={info.title}
+                                        className="rounded-2xl border border-background/10 bg-background/5 p-6"
+                                    >
+                                        {Content}
                                     </div>
-                                    <h3 className="mt-4 font-semibold text-background">{info.title}</h3>
-                                    <p className="mt-1 text-background/70">{info.content}</p>
-                                </div>
-                            ))}
+                                )
+                            })}
                         </div>
 
                         {/* WhatsApp Button */}
                         <a
-                            href={`https://wa.me/${whatsappNumber}`}
+                            href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent("Hello Noor Al Warsan LLC, I would like to inquire about your services.")}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group flex items-center justify-center gap-3 rounded-2xl border border-background/20 bg-background/10 p-6 transition-all hover:border-accent hover:bg-background/20"
+                            className="group flex items-center justify-between rounded-2xl border-2 border-[#25D366]/40 bg-[#25D366]/10 p-6 transition-all hover:border-[#25D366] hover:bg-[#25D366]/20"
                         >
-                            <WhatsAppIcon className="h-8 w-8 text-[#25D366]" />
-                            <div className="text-left">
-                                <div className="font-semibold text-background">Chat on WhatsApp</div>
-                                <div className="text-sm text-background/60">Quick response guaranteed</div>
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#25D366] text-white shadow-md shadow-[#25D366]/30">
+                                    <WhatsAppIcon className="h-7 w-7" />
+                                </div>
+                                <div className="text-left">
+                                    <div className="font-semibold text-background">Chat Directly on WhatsApp</div>
+                                    <div className="text-sm text-background/70">Connect instantly with our sales team</div>
+                                </div>
                             </div>
+                            <span className="hidden sm:inline-block rounded-full bg-[#25D366]/20 px-3 py-1 text-xs font-semibold text-[#25D366] border border-[#25D366]/40">
+                                Online
+                            </span>
                         </a>
 
                         {/* Map Placeholder */}
