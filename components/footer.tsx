@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Facebook, Twitter, Instagram, Linkedin, ArrowUp } from "lucide-react"
+import { WhatsAppIcon } from "./whatsapp-icon"
 import { motion } from "framer-motion"
 
 const footerLinks = {
@@ -20,12 +21,15 @@ const footerLinks = {
   support: [
     { label: "Contact Us", href: "#contact" },
     { label: "Request Quote", href: "#contact" },
-    { label: "FAQ", href: "#" },
-    { label: "Careers", href: "#" },
+    { label: "Logistics", href: "#logistics" },
+    { label: "Testimonials", href: "#testimonials" },
   ],
 }
 
+const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "971529996746"
+
 const socialLinks = [
+  { icon: WhatsAppIcon, href: `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, "")}`, label: "WhatsApp", isCustom: true },
   { icon: Facebook, href: "#", label: "Facebook" },
   { icon: Twitter, href: "#", label: "Twitter" },
   { icon: Instagram, href: "#", label: "Instagram" },
@@ -63,6 +67,8 @@ export function Footer() {
                 <a
                   key={social.label}
                   href={social.href}
+                  target={social.href.startsWith("http") ? "_blank" : undefined}
+                  rel={social.href.startsWith("http") ? "noopener noreferrer" : undefined}
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
                   aria-label={social.label}
                 >
